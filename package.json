@@ -2,10 +2,9 @@
   "name": "express-101",
   "version": "0.1.0",
   "description": "Step-by-step tutorial on how to use Express with and without GraphQL",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
-    "dev": "nodemon -i test index.js & mocha -w -R min",
-    "start": "node index.js",
+    "dev": "nodemon -q -i test server.js & mocha -w -R min",
     "test": "mocha -R dot"
   },
   "keywords": [

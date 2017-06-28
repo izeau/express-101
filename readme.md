@@ -1,32 +1,43 @@
-# Step 1: Initialization
+# Step 2: Simple server
 
-## Init the project
+## App configuration
 
-```sh
-# Init npm
-npm init -y
+```js
+app.enable('case sensitive routing');
+app.enable('strict routing');
+app.disable('x-powered-by');
 
-# Install dependencies
-npm i body-parser dotenv express
-
-# Install dev dependencies
-npm i -D mocha supertest
-
-# Create directories
-mkdir test
-
-# Create files
-touch .env index.js readme.md server.js test/index.js
+if (app.get('env') === 'development') {
+  app.set('json spaces', 2);
+}
 ```
 
-## npm scripts
+## Testing with supertest
 
-Updates to `package.json`:
+```js
+const request = require('supertest');
+const app = require('../app');
 
-```json
-{
-  "dev": "nodemon -i test index.js & mocha -w -R min",
-  "start": "node index.js",
-  "test": "mocha -R dot"
-}
+request(app)
+  .get('/hello')
+  .expect(200)
+  .expect({ hello: 'world' });
+```
+
+## Environment variables
+
+Use `dotenv`!
+
+```sh
+NODE_ENV=development
+HTTP_HOST=localhost
+HTTP_PORT=3000
+```
+
+## The server
+
+Tell Express to listen on said host and port.
+
+```
+app.listen(HTTP_PORT, HTTP_HOST);
 ```
