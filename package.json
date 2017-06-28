@@ -1,0 +1,28 @@
+{
+  "name": "express-101",
+  "version": "0.1.0",
+  "description": "Step-by-step tutorial on how to use Express with and without GraphQL",
+  "main": "app.js",
+  "scripts": {
+    "dev": "nodemon -q -i test server.js & mocha -w -R min",
+    "test": "mocha -R dot"
+  },
+  "keywords": [
+    "express",
+    "tutorial",
+    "router",
+    "graphql"
+  ],
+  "author": "Jean Dupouy <jean.dupouy@rednet.io>",
+  "license": "MIT",
+  "dependencies": {
+    "body-parser": "^1.17.2",
+    "dotenv": "^4.0.0",
+    "express": "^4.15.3"
+  },
+  "devDependencies": {
+    "mocha": "^3.4.2",
+    "nodemon": "^1.11.0",
+    "supertest": "^3.0.0"
+  }
+}
