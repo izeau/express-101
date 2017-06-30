@@ -1,43 +1,51 @@
-# Step 2: Simple server
+# Step 3: Express router
 
-## App configuration
-
-```js
-app.enable('case sensitive routing');
-app.enable('strict routing');
-app.disable('x-powered-by');
-
-if (app.get('env') === 'development') {
-  app.set('json spaces', 2);
-}
-```
-
-## Testing with supertest
-
-```js
-const request = require('supertest');
-const app = require('../app');
-
-request(app)
-  .get('/hello')
-  .expect(200)
-  .expect({ hello: 'world' });
-```
-
-## Environment variables
-
-Use `dotenv`!
+## Create routes
 
 ```sh
-NODE_ENV=development
-HTTP_HOST=localhost
-HTTP_PORT=3000
+mkdir routes
+touch routes/{articles,comments}.js
 ```
 
-## The server
+## Testing
 
-Tell Express to listen on said host and port.
-
+```js
+describe('GET /articles', function() {
+  it('lists articles', () => request(app)
+    .get('/articles')
+    .expect(200)
+    .expect(res => res.body.forEach(article => {
+      assert.equal(typeof article.slug, 'string');
+      assert.equal(typeof article.title, 'string');
+      assert.equal(typeof article.body, 'string');
+    }))
+  );
+});
 ```
-app.listen(HTTP_PORT, HTTP_HOST);
+
+## Routing
+
+```js
+const router = module.exports = require('express').Router({
+  caseSensitive: true,
+  strict: true,
+});
+
+router.get('/articles', (req, res) => {
+  res.send(db.articles);
+});
+
+/* … */
+
+router.use(bodyParser.json());
+
+router.post('/articles', (req, res) => {
+  res.send();
+
+  db.articles = db.articles.concat({
+    slug: slugify(req.body.title),
+    title: req.body.title,
+    body: req.body.body,
+  });
+});
 ```

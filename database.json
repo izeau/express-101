@@ -1,0 +1,14 @@
+{
+  "articles": [
+    {
+      "slug": "my-first-article",
+      "title": "My first article!",
+      "body": "Some really interesting text."
+    },
+    {
+      "slug": "hey-again",
+      "title": "Hey again!",
+      "body": "I’m getting good with this thing."
+    }
+  ]
+}

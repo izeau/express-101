@@ -1,6 +1,8 @@
 'use strict';
 
 const express = require('express');
+const articles = require('./routes/articles');
+
 const app = module.exports = express();
 
 app.enable('case sensitive routing');
@@ -14,3 +16,5 @@ if (app.get('env') === 'development') {
 app.get('/hello', (req, res) => {
   res.send({ hello: 'world' });
 });
+
+app.use(articles);
