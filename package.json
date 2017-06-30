@@ -16,9 +16,10 @@
   "author": "Jean Dupouy <jean.dupouy@rednet.io>",
   "license": "MIT",
   "dependencies": {
-    "body-parser": "^1.17.2",
     "dotenv": "^4.0.0",
-    "express": "^4.15.3"
+    "express": "^4.15.3",
+    "express-graphql": "^0.6.6",
+    "graphql": "^0.10.3"
   },
   "devDependencies": {
     "mocha": "^3.4.2",
