@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Express 101</title>
+    <meta charset="utf-8">
+    <style>
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+
+      body { font-family: 'Droid Serif'; }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+      }
+      .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
+      .remark-slide-content {
+        background-repeat: repeat;
+        background-color: #2c3e50;
+        color: #ecf0f1;
+      }
+      .title h1 {
+        font-size: 6em;
+      }
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+class: title, center, middle
+background-image: url(http://cdn.backgroundhost.com/backgrounds/subtlepatterns/cartographer.png)
+
+# Express 101
+
+---
+
+class: center, middle
+
+# Step 1: Initialization
+
+---
+
+## Init the project
+
+```sh
+# Init npm
+npm init -y
+
+# Install dependencies
+npm i body-parser dotenv express
+
+# Install dev dependencies
+npm i -D mocha supertest
+
+# Create directories
+mkdir test
+
+# Create files
+touch .env app.js readme.md server.js test/app.js
+```
+
+---
+
+## npm scripts
+
+Updates to `package.json`:
+
+```json
+{
+  "dev": "nodemon -q -i test server.js & mocha -w -R min",
+  "test": "mocha -R dot"
+}
+```
+
+---
+
+class: center, middle
+
+# Step 2: Simple server
+
+---
+
+## App configuration
+
+```js
+app.enable('case sensitive routing');
+app.enable('strict routing');
+app.disable('x-powered-by');
+
+if (app.get('env') === 'development') {
+  app.set('json spaces', 2);
+}
+```
+
+---
+
+## Testing with supertest
+
+```js
+const request = require('supertest');
+const app = require('../app');
+
+request(app)
+  .get('/hello')
+  .expect(200)
+  .expect({ hello: 'world' });
+```
+
+---
+
+## Environment variables
+
+Use `dotenv`!
+
+```sh
+NODE_ENV=development
+HTTP_HOST=localhost
+HTTP_PORT=3000
+```
+
+---
+
+## The server
+
+Tell Express to listen on said host and port.
+
+```js
+app.listen(HTTP_PORT, HTTP_HOST);
+```
+
+---
+
+class: center, middle
+
+# Step 3: Express router
+
+---
+
+## Create routes
+
+```sh
+mkdir routes
+touch routes/{articles,comments}.js
+```
+
+---
+
+## Testing
+
+```js
+describe('GET /articles', function() {
+  it('lists articles', () => request(app)
+    .get('/articles')
+    .expect(200)
+    .expect(res => res.body.forEach(article => {
+      assert.equal(typeof article.slug, 'string');
+      assert.equal(typeof article.title, 'string');
+      assert.equal(typeof article.body, 'string');
+    }))
+  );
+});
+```
+
+---
+
+## Routing
+
+```js
+const router = module.exports = require('express').Router({
+  caseSensitive: true,
+  strict: true,
+});
+
+router.get('/articles', (req, res) => {
+  res.send(db.articles);
+});
+
+/* … */
+
+router.use(bodyParser.json());
+
+router.post('/articles', (req, res) => {
+  res.send();
+
+  db.articles = db.articles.concat({
+    slug: slugify(req.body.title),
+    title: req.body.title,
+    body: req.body.body,
+  });
+});
+```
+
+---
+
+class: center, middle
+
+# Step 4: GraphQL
+
+---
+
+## Install packages
+
+```sh
+npm i graphql express-graphql
+```
+
+---
+
+## Update tests
+
+```js
+it('lists articles', () => request(app)
+  .post('/graphql')
+  .send({
+    query: `
+      {
+        listArticles {
+          slug,
+          title,
+          body,
+        }
+      }
+    `,
+  })
+  .expect(200)
+  .expect(res => res.body.data.listArticles.forEach(article => {
+    assert.equal(typeof article.slug, 'string');
+    assert.equal(typeof article.title, 'string');
+    assert.equal(typeof article.body, 'string');
+  }))
+);
+```
+
+---
+
+## Article schema
+
+```js
+exports.types = `
+  type Article {
+    slug: String!,
+    title: String!,
+    body: String!,
+  }
+`;
+
+exports.queries = `
+  listArticles: [Article],
+  getArticle(slug: String!): Article,
+`;
+
+exports.mutations = `
+  createArticle(title: String!, body: String!): Article,
+  updateArticle(slug: String!, title: String!, body: String!): Article,
+  deleteArticle(slug: String!): Boolean!,
+`;
+```
+
+---
+
+## Article rootValue
+
+```js
+exports.rootValue = {
+  listArticles() {
+    return db.articles;
+  },
+  getArticle({ slug }) {
+    return db.articles.find(article => article.slug === slug);
+  },
+  /* … */
+  deleteArticle({ slug }) {
+    db.articles = db.articles.filter(article => article.slug !== slug);
+
+    saveDatabase();
+
+    return true;
+  },
+}
+```
+
+---
+
+## Root schema
+
+```js
+const article = require('./article');
+
+exports.schema = buildSchema(`
+  type Query {
+    ${article.queries}
+  }
+
+  type Mutation {
+    ${article.mutations}
+  }
+
+  ${article.types}
+`);
+
+exports.rootValue = Object.assign({},
+  article.rootValue
+);
+```
+
+---
+
+## Middleware
+
+```js
+const graphqlHTTP = require('express-graphql');
+const { schema, rootValue } = require('./graphql');
+
+/* … */
+
+const developmentMode = app.get('env') === 'development';
+
+app.use('/graphql', graphqlHTTP({
+  schema,
+  rootValue,
+  graphiql: developmentMode,
+  pretty: developmentMode,
+}));
+```
+
+    </textarea>
+    <script src="https://remarkjs.com/downloads/remark-latest.min.js">
+    </script>
+    <script>
+      var slideshow = remark.create({ ratio: '16:10' });
+    </script>
+  </body>
+</html>
